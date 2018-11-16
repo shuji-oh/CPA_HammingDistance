@@ -20,12 +20,13 @@ sbox=(
 0xe1,0xf8,0x98,0x11,0x69,0xd9,0x8e,0x94,0x9b,0x1e,0x87,0xe9,0xce,0x55,0x28,0xdf,
 0x8c,0xa1,0x89,0x0d,0xbf,0xe6,0x42,0x68,0x41,0x99,0x2d,0x0f,0xb0,0x54,0xbb,0x16)
 
-idx_calc=(0,1,2,3,7,4,5,6,10,11,8,9,13,14,15,12)
+idx_calc=(0,13,10,7,4,1,14,11,8,5,2,15,12,9,6,3)
+inv_idx_calc=(0,5,10,15,4,9,14,3,8,13,2,7,12,1,6,11)
 
 def intermediate(pt, keyguess):
     return sbox[int(pt) ^ keyguess]
 
-traces = np.loadtxt('aes_tv_0000001-0010000_power.csv', delimiter=',')
+traces = np.loadtxt('aes_tv_0000001-0005000_power.csv', delimiter=',')
 pt = np.loadtxt('CIPHERTEXT10000.csv', delimiter=',')
 
 numtraces = np.shape(traces)[0]
@@ -71,12 +72,12 @@ for bnum in range(0, 16):
             idx = idx_calc[bnum]
 
             snum = int(pt[tnum][idx]) ^ kguess
-
             for i in range(0,256):
                 if snum == sbox[i]:
-                    anum = i
-            #print "snum=%x,anum=%x" % (snum,anum)
-            hyp[tnum] = HD(pt[tnum][bnum], anum)
+                    leak_middle = i
+                    break
+            #print "snum=%x,anum=%x" % (snum,leak_middle)
+            hyp[tnum] = HD(pt[tnum][bnum], leak_middle)
 
 
         #Mean of hypothesis
@@ -115,4 +116,4 @@ for bnum in range(0, 16):
     bestguess[bnum] = np.argmax(maxcpa)
 
 print "Best Key Guess: "
-for b in bestguess: print "%02x "%b,
+for subkey_i in range(len(bestguess)): print "%02x "%bestguess[inv_idx_calc[subkey_i]],
